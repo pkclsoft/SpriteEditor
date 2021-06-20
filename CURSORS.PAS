@@ -18,8 +18,6 @@ Type
 	      HotSpot		:	Point;
 	   end;
 
-{procedure SetMyCursor (var theCursor: MyCursorType); tool ($04, $8E);}
-
 var
 	Current_cursor	: Integer;
 
@@ -98,7 +96,7 @@ begin
 	begin
 		CursorHeight := 11;
 		CursorWidth		:= 5;
-		HotSpotX		:= 8;
+		HotSpotX		:= 6;
 		HotSpotY		:= 6;
 		
 		Addr := Ord4(@cursorImage);

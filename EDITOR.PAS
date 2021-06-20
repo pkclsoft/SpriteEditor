@@ -7,8 +7,49 @@ uses Common, DialogMgr, QuickDrawII, Cursors, SFToolSet, WindowMgr, Globals, Fil
 { This routine initializes each of the //GS Tools required for every application.}
 
 procedure startup_tools;
+const
+   {  -------------------   Toolbox Numbers   -------------------  }
+
+    { Toolbox number constants for use in Tool Locator type calls. }
+
+    ToolLocator     = 1;
+    MemoryManager   = 2;
+    MiscToolSet     = 3;
+    QuickDrawII     = 4;
+    DeskManager     = 5;
+    EventManager    = 6;
+    Scheduler       = 7;
+    SoundToolSet    = 8;
+    ADBToolSet      = 9;
+    SANEToolSet     = 10;
+    IntegerMath     = 11;
+    TextToolSet     = 12;
+    ReservedSet     = 13;
+    WindowManager   = 14;
+    MenuManager     = 15;
+    ControlManager  = 16;
+    SystemLoader    = 17;
+    QuickDrawIIAux  = 18;
+    PrintManager    = 19;
+    LineEditToolSet = 20;
+    DialogManager   = 21;
+    ScrapManager    = 22;
+    StandardFile    = 23;
+    NotAvailable    = 24;
+    NoteSynthesizer = 25;
+    NoteSequencer   = 26;
+    FontManager     = 27;
+    ListManager     = 28;
+    ACEToolSet      = 29;
+    ResourceManager = 30;
+    MIDIToolSet     = 31;
+    TextEditToolSet = 34;
+
+type 
+    startStopRecordPtr = ^startStopRecord;
 var
-    Toolrec :  ToolTable;
+    Toolrec :  startStopRecordPtr;
+    dummy: longint;
 begin
     TLStartUp;                          { init Tool Locator }
     Myuserid := MMStartUp;              { init Memory manager }
@@ -49,27 +90,71 @@ begin
    
    { Now load RAM based tools (and RAM patches to ROM tools!) }
 
-   ToolRec.numToolsRequired := 8;
-   ToolRec.Tool[1].toolNumber := 14;        { Window Manager }
-   ToolRec.Tool[1].MinVersion := 0;
-   ToolRec.Tool[2].toolNumber := 15;        { Menu Manager }
-   ToolRec.Tool[2].MinVersion := 1;
-   ToolRec.Tool[3].toolNumber := 16;        { Control Manager }
-   ToolRec.Tool[3].MinVersion := 1;
-   ToolRec.Tool[4].toolNumber := 18;        { QD Aux }
-   ToolRec.Tool[4].MinVersion := 0;
-   ToolRec.Tool[5].toolNumber := 20;        { Line Edit }
-   ToolRec.Tool[5].MinVersion := 0;
-   ToolRec.Tool[6].toolNumber := 21;        { Dialogue  Manager }
-   ToolRec.Tool[6].MinVersion := 0;
-   ToolRec.Tool[7].toolNumber := 22;        { Scrap Manager }
-   ToolRec.Tool[7].MinVersion := 0;
-   ToolRec.Tool[8].toolNumber := 23;        { Standard File }
-   ToolRec.Tool[8].MinVersion := 0;
-   LoadTools(ToolRec);                  { Load the tools I need }
+   new(ToolRec);
+
+   with ToolRec^ do
+   begin
+		flags := 0;
+		videoMode := mode320;
+		numTools := 26;
+	
+		toolArray[01].toolNumber := ToolLocator;
+		toolArray[01].minVersion := $0300;
+		toolArray[02].toolNumber := ADBToolSet;
+		toolArray[02].minVersion := $0201;
+		toolArray[03].toolNumber := TextToolSet;
+		toolArray[03].minVersion := $0201;
+		toolArray[04].toolNumber := MemoryManager;
+		toolArray[04].minVersion := $0300;
+		toolArray[05].toolNumber := SANEToolSet;
+		toolArray[05].minVersion := $0202;
+		toolArray[06].toolNumber := ResourceManager;
+		toolArray[06].minVersion := $0100;
+		toolArray[07].toolNumber := MiscToolSet;
+		toolArray[07].minVersion := $0300;
+		toolArray[08].toolNumber := Scheduler;
+		toolArray[08].minVersion := $0200;
+		toolArray[09].toolNumber := SystemLoader;
+		toolArray[09].minVersion := $0300;
+		toolArray[10].toolNumber := QuickDrawII;
+		toolArray[10].minVersion := $0301;
+		toolArray[11].toolNumber := QuickDrawIIAux;
+		toolArray[11].minVersion := $0301;
+		toolArray[12].toolNumber := EventManager;
+		toolArray[12].minVersion := $0300;
+		toolArray[13].toolNumber := WindowManager;
+		toolArray[13].minVersion := $0301;
+		toolArray[14].toolNumber := ControlManager;
+		toolArray[14].minVersion := $0301;
+		toolArray[15].toolNumber := MenuManager;
+		toolArray[15].minVersion := $0301;
+		toolArray[16].toolNumber := lineEditToolSet;
+		toolArray[16].minVersion := $0301;
+		toolArray[17].toolNumber := DialogManager;
+		toolArray[17].minVersion := $0302;
+		toolArray[18].toolNumber := SoundToolSet;
+		toolArray[18].minVersion := $0301;
+		toolArray[19].toolNumber := NoteSynthesizer;
+		toolArray[19].minVersion := $0104;
+		toolArray[20].toolNumber := StandardFile;
+		toolArray[20].minVersion := $0301;
+		toolArray[21].toolNumber := ScrapManager;
+		toolArray[21].minVersion := $0300;
+		toolArray[22].toolNumber := DeskManager;
+		toolArray[22].minVersion := $0302;
+		toolArray[23].toolNumber := ListManager;
+		toolArray[23].minVersion := $0301;
+		toolArray[24].toolNumber := FontManager;
+		toolArray[24].minVersion := $0301;
+		toolArray[25].toolNumber := PrintManager;
+		toolArray[25].minVersion := $0300;
+		toolArray[26].toolNumber := TextEditToolSet;
+		toolArray[26].minVersion := $0101;
+   end;
+   dummy := StartupTools(Myuserid, 0, ToolRec);                  { Load the tools I need }
     
    if TLStatus
-    then
+   then
         begin
             MoveTo(0,80);
             SetBackColor(0);
@@ -82,7 +167,7 @@ begin
             SetBackColor(0);
             SetForeColor(1);
             DrawString('Tools loaded ok.');
-        end;}
+        end;
 
     QDAuxStartUp;
                   
@@ -228,10 +313,10 @@ function MousedWindow : Integer;
 var
     i : integer;
 begin
-    i := 1;
+    i := 0;
     repeat
         i := i + 1;
-    until PtInRect(Event.eventWhere, WindRect[i]);
+    until PtInRect(Event.eventWhere, WindRect[i]) or (i = TotalWindow);
 
     MousedWindow := i;
 end;
@@ -371,6 +456,10 @@ begin
 end;
 { Set up window record }
 
+procedure NewDItemPtr (theDialog: grafPortPtr; itemID: integer; var itemRect: rect;
+                    itemType: integer; itemDescr: univ longint;
+                    itemValue, itemFlag: integer; itemColorPtr: colorTblPtr);
+tool ($15, $0D);
 
 procedure DoAbout;
 var
@@ -389,7 +478,7 @@ begin
         top := 30; left := 68; bottom := 45; right := 155;
     end;
 
-    NewDItem(aboutDlog,1,r,10,@'Ok',0,0,ic);
+    NewDItemPtr(aboutDlog,1,r,10,@'Ok',0,0,nil);
     SetDefButton(1,aboutDlog);
 
     SetForeColor(10);
@@ -422,14 +511,14 @@ begin
         top := 30; left := 10; bottom := 0; right := 0;
     end;
 
-    NewDItem(quitDlog,1,r,10,@'Quit',0,0,ic);
+    NewDItemPtr(quitDlog,1,r,10,@'Quit',0,0,nil);
     SetDefButton(1,quitDlog);
 
     with    r do begin
         top := 30; left := 135; bottom := 0; right := 0;
     end;
 
-    NewDItem(quitDlog,2,r,10,@'Cancel',0,0,ic);
+    NewDItemPtr(quitDlog,2,r,10,@'Cancel',0,0,nil);
 
     SetForeColor(7);
     SetBackColor(15);
@@ -633,8 +722,6 @@ begin
     while not Time_to_quit do begin
     
         Monitor_tasks;
-        
-        WriteLine('monitor tasks');
         
     end;
     

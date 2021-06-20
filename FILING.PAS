@@ -62,13 +62,17 @@ begin
 
 end;
 
+procedure NewDItemPtr (theDialog: grafPortPtr; itemID: integer; var itemRect: rect;
+                    itemType: integer; itemDescr: univ longint;
+                    itemValue, itemFlag: integer; itemColorPtr: colorTblPtr);
+tool ($15, $0D);
+
 procedure OpenSprite;
 var
 	openDlog: grafPortPtr;
 	r:	   Rect;
 	itemHit:   Integer;
 	i, j: Integer;
-	ic : colorTable;
 begin
 	with	r do begin
 		top := 50; left := 50; bottom := 100; right := 270;
@@ -80,13 +84,13 @@ begin
 		top := 30; left := 10; bottom := 0; right := 0;
 	end;
 
-	NewDItem(openDlog,1,r,10,@'Ok',0,0,ic);
+	NewDItemPtr(openDlog,1,r,10,@'Ok',0,0,nil);
 
 	with	r do begin
 		top := 30; left := 135; bottom := 0; right := 0;
 	end;
 
-	NewDItem(openDlog,2,r,10,@'Cancel',0,0,ic);
+	NewDItemPtr(openDlog,2,r,10,@'Cancel',0,0,nil);
 	SetDefButton(2,openDlog);
 
 	SetForeColor(7);
@@ -115,19 +119,19 @@ begin
 			    i := 0;
 			    repeat
 					Read(SpriteFile,chartr);
-					If ord(chartr) > 64
-					then
-						begin
-							Sprite[i,j] := ord(chartr) - 55;
-						end
-					else 
+					if ord(chartr) <> 13 then
 					begin
-					    if ord(chartr) <> 13 then
+						If ord(chartr) > 64
+						then
+							begin
+								Sprite[i,j] := ord(chartr) - 55;
+							end
+						else 
 							Sprite[i,j] := ord(chartr) - 48;
 					end;
 					
 					i := i + 1;
-				until (i = 49) or (ord(chartr) = 13);
+				until (i = 50) or (ord(chartr) = 13);
 				
 				If ord(chartr) <> 13 then Read(SpriteFile,chartr);
 			end;
