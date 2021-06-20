@@ -1,0 +1,3 @@
+filetype =.pas src 5
+filetype build src 6
+filetype obj/bind src 6

@@ -1,0 +1,13 @@
+set echo 1
+set linkname $
+set keeptype EXE
+set keepname $
+asm CURSORS.PAS
+asm GLOBALS.PAS   
+asm FILING.PAS     
+asm EDITOR.PAS
+move -C =.root obj
+move -C =.a obj
+rm =.int
+cd obj
+bind
