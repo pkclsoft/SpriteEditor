@@ -2,7 +2,7 @@ Unit Cursors;
 
 INTERFACE
 
-uses  QDIntf, GSIntf, ConsoleIO;
+uses  Common, QuickDrawII, IntegerMath, WindowMgr, EventMgr;
 
 const
 	Arrow_cursor = 0;
@@ -18,14 +18,16 @@ Type
 	      HotSpot		:	Point;
 	   end;
 
+{procedure SetMyCursor (var theCursor: MyCursorType); tool ($04, $8E);}
+
 var
 	Current_cursor	: Integer;
 
-	My_beam			: MyCursorType;
+	My_beam			: cursor;
 	
 	Very_busy		: Boolean;
 
-procedure Check_cursors(Current_window_ptr : WindowPtr);
+procedure Check_cursors(Current_window_ptr : grafPortPtr);
 procedure Do_arrow;
 procedure Do_watch;
 procedure Do_beam;
@@ -38,7 +40,7 @@ begin
 	If (Current_cursor = Arrow_cursor) or
 	   (Current_cursor = Watch_cursor) then
 	begin
-		SetCursor(@My_beam);
+		SetCursor(My_beam);
 		Current_cursor := Beam_cursor;
 	end;
 end;
@@ -59,10 +61,10 @@ begin
 	end;
 end;
 
-procedure Check_cursors(Current_window_ptr : WindowPtr);
+procedure Check_cursors; {(Current_window_ptr : WindowPtr);}
 var
 	code:	 integer;
-	theWind : WindowPtr;
+	theWind : grafPortPtr;
 	myPoint : Point;
 begin
 	{ Make sure cursor is	being displayed	as the correct type }
@@ -77,7 +79,7 @@ begin
 		end
 	else
 		begin
-			if code =	wInContent
+			if code = wInContent
 			then
 				begin
 					Do_beam;
@@ -96,32 +98,32 @@ begin
 	begin
 		CursorHeight := 11;
 		CursorWidth		:= 5;
-		HotSpot.h		:= 8;
-		HotSpot.v		:= 6;
+		HotSpotX		:= 8;
+		HotSpotY		:= 6;
 		
-		Addr := Ord4(@data);
-	    StuffHex(addr,  	'00000000000000000000');
-	    StuffHex(addr+10,	'00000000000000000000');
-	    StuffHex(addr+20,	'00000000000000000000');
-	    StuffHex(addr+30,	'0000f0000f0000000000');
-	    StuffHex(addr+40,	'00000f00f00000000000');
-	    StuffHex(addr+50,	'00000000000000000000');
-	    StuffHex(addr+60,	'00000000000000000000');
-	    StuffHex(addr+70,	'00000f00f00000000000');
-	    StuffHex(addr+80,	'0000f0000f0000000000');
-	    StuffHex(addr+90,	'00000000000000000000');
-	    StuffHex(addr+100,	'00000000000000000000');
-	    StuffHex(addr+110,	'00000000000000000000');
-	    StuffHex(addr+120,	'00000000000000000000');
-	    StuffHex(addr+130,	'00000000000000000000');
-	    StuffHex(addr+140,	'00000000000000000000');
-	    StuffHex(addr+150,	'00000000000000000000');
-	    StuffHex(addr+160,	'00000000000000000000');
-	    StuffHex(addr+170,	'00000000000000000000');
-	    StuffHex(addr+180,	'00000000000000000000');
-	    StuffHex(addr+190,	'00000000000000000000');
-	    StuffHex(addr+200,	'00000000000000000000');
-	    StuffHex(addr+210,	'00000000000000000000');
+		Addr := Ord4(@cursorImage);
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('00f0000f00000000', 16); addr := addr + 8;
+	    addr := Hex2Long('000f00f000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('000f00f000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('00f0000f00000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
+	    addr := Hex2Long('0000000000000000', 16); addr := addr + 8;
 	end;
 end;
 

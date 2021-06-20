@@ -2,7 +2,7 @@ Unit Globals;
 
 INTERFACE
 
-uses QDIntf, GSIntf, MiscTools, ConsoleIO, Cursors, ProDOS16;
+uses Common, QuickDrawII, Cursors, WindowMgr;
 
 const
 	ScreenMode = $00;	{   0 for 320 mode, $80 for 640 mode }
@@ -37,13 +37,13 @@ const
 	MesBottom = 199;
 		
 var
-	AppleMenuStr	: Str255;
-	FileMenuStr		: Str255;
-	EditMenuStr		: Str255;
-	PhoneMenuStr	: Str255;
-	ReceiveMenuStr	: Str255;
-	SendMenuStr		: Str255;
-	SessionMenuStr	: Str255;
+	AppleMenuStr	: String[255];
+	FileMenuStr		: String[255];
+	EditMenuStr		: String[255];
+	PhoneMenuStr	: String[255];
+	ReceiveMenuStr	: String[255];
+	SendMenuStr		: String[255];
+	SessionMenuStr	: String[255];
 
 	Myuserid		: Integer;
 	Event_number	: Integer;
@@ -54,8 +54,8 @@ var
 	a,b				: Integer;
 	Freshit			: Integer;
 
-	Windrecord		: array [1..Maxwindow] of NewWindowParamBlk;
-	Mywindow		: array [1..Maxwindow] of WindowPtr;
+	Windrecord		: array [1..Maxwindow] of paramList;
+	Mywindow		: array [1..Maxwindow] of grafPortPtr;
 	Sprite			: array [0..49,0..49]  of Byte;
 	WindRect		: array [1..Maxwindow] of rect;
 
@@ -71,6 +71,7 @@ IMPLEMENTATION
 procedure ClearSprite;
 var
 	r : rect;
+	a, b : integer;
 begin
 	WaitCursor;
 	Current_cursor := Watch_cursor;

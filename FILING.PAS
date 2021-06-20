@@ -2,17 +2,16 @@ Unit Filing;
 
 INTERFACE
 
-uses QDIntf, GSIntf, MiscTools, ConsoleIO, Cursors, ProDOS16, Globals;
+uses Common, DialogMgr, QuickDrawII, Cursors, SFToolSet, WindowMgr, Globals;
 
 var
 	myReply		: ReplyRecord; { misc globals}
-	P16Blk		: P16ParamBlk;
 	SpriteFile	: Text;
 	SpriteWidth	: Integer;
 	SpriteHeight : Integer;
 	i,j : Integer;
 	chartr : char;
-	TList : TypeListrec;
+	TList : typeList;
 	
 procedure SaveSprite;
 procedure OpenSprite;
@@ -20,6 +19,8 @@ procedure OpenSprite;
 IMPLEMENTATION
 
 procedure SaveSprite;
+var
+  i, j: Integer;
 begin
 	SetPort(Mywindow[Message]);
 	MoveTo(1,10);
@@ -63,9 +64,11 @@ end;
 
 procedure OpenSprite;
 var
-	openDlog: DialogPtr;
+	openDlog: grafPortPtr;
 	r:	   Rect;
 	itemHit:   Integer;
+	i, j: Integer;
+	ic : colorTable;
 begin
 	with	r do begin
 		top := 50; left := 50; bottom := 100; right := 270;
@@ -77,13 +80,13 @@ begin
 		top := 30; left := 10; bottom := 0; right := 0;
 	end;
 
-	NewDItem(openDlog,1,r,10,@'Ok',0,0,nil);
+	NewDItem(openDlog,1,r,10,@'Ok',0,0,ic);
 
 	with	r do begin
 		top := 30; left := 135; bottom := 0; right := 0;
 	end;
 
-	NewDItem(openDlog,2,r,10,@'Cancel',0,0,nil);
+	NewDItem(openDlog,2,r,10,@'Cancel',0,0,ic);
 	SetDefButton(2,openDlog);
 
 	SetForeColor(7);
@@ -97,7 +100,7 @@ begin
 	If itemHit = 1 then 		{lets get another one then}
 	begin
 		TList.NumEntries := 1;
-		TList.FileType1  := $04;
+		TList.FileType[1]  := $04;
 	
 		SFGetFile(25, 20, 'Load which sprite :',Nil,@TList, myReply);
 		
@@ -109,18 +112,23 @@ begin
 			
 			for j := 0 to 49 do
 			begin
-				for i := 0 to 49 do
-				begin
+			    i := 0;
+			    repeat
 					Read(SpriteFile,chartr);
-					If ord(chartr) = 13 then Leave;
 					If ord(chartr) > 64
 					then
 						begin
 							Sprite[i,j] := ord(chartr) - 55;
 						end
-					else
-						Sprite[i,j] := ord(chartr) - 48;
-				end;
+					else 
+					begin
+					    if ord(chartr) <> 13 then
+							Sprite[i,j] := ord(chartr) - 48;
+					end;
+					
+					i := i + 1;
+				until (i = 49) or (ord(chartr) = 13);
+				
 				If ord(chartr) <> 13 then Read(SpriteFile,chartr);
 			end;
 	
