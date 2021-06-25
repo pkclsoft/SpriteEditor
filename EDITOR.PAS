@@ -4,82 +4,18 @@ uses Common, DialogMgr, QuickDrawII, Cursors, SFToolSet, WindowMgr, Globals, Fil
      ToolLocator, MemoryMgr, MscToolSet, IntegerMath, EventMgr, ControlMgr, MenuMgr,
      ScrapMgr, LineEdit, DeskMgr, TextToolSet;
 
+var
+    toolResult : longint;
+
 { This routine initializes each of the //GS Tools required for every application.}
 
-procedure startup_tools;
-const
-   {  -------------------   Toolbox Numbers   -------------------  }
-
-    { Toolbox number constants for use in Tool Locator type calls. }
-
-    ToolLocator     = 1;
-    MemoryManager   = 2;
-    MiscToolSet     = 3;
-    QuickDrawII     = 4;
-    DeskManager     = 5;
-    EventManager    = 6;
-    Scheduler       = 7;
-    SoundToolSet    = 8;
-    ADBToolSet      = 9;
-    SANEToolSet     = 10;
-    IntegerMath     = 11;
-    TextToolSet     = 12;
-    ReservedSet     = 13;
-    WindowManager   = 14;
-    MenuManager     = 15;
-    ControlManager  = 16;
-    SystemLoader    = 17;
-    QuickDrawIIAux  = 18;
-    PrintManager    = 19;
-    LineEditToolSet = 20;
-    DialogManager   = 21;
-    ScrapManager    = 22;
-    StandardFile    = 23;
-    NotAvailable    = 24;
-    NoteSynthesizer = 25;
-    NoteSequencer   = 26;
-    FontManager     = 27;
-    ListManager     = 28;
-    ACEToolSet      = 29;
-    ResourceManager = 30;
-    MIDIToolSet     = 31;
-    TextEditToolSet = 34;
-
-type 
-    startStopRecordPtr = ^startStopRecord;
+function startup_tools : longint;
 var
-    Toolrec :  startStopRecordPtr;
-    dummy: longint;
+    hexStr : pString;
+    toolLoadError : longint;
 begin
     TLStartUp;                          { init Tool Locator }
     Myuserid := MMStartUp;              { init Memory manager }
-    MTStartUp;                          { init Misc Tools }
-
-   { Allocate 8 pages of memory in bank 0 for use by GS Tools.
-     3 pages for QuickDraw, 
-     1 page for Event Manager, 
-     1 page for Menu Manager,
-     1 page for Control Manager,
-     1 page for Line Edit,
-     1 page for Standard File}
-
-    Myhandle :=  NewHandle(8 * 256,                     { allocate 7 pages }
-                          Myuserid,                     { User ID for memory blocks }
-                          attrBank+attrFixed+attrLocked,    { Attributes }
-                          ptr(0));                      { start in bank 0 }
-
-    QDStartUp(LoWord(Myhandle^),                { low address of the first 3 zero pages }
-             ScreenMode,                        { 640 mode }
-             160,                               { max size of scan line }
-             Myuserid);                         { User ID for memory blocks }       
-
-   EMStartUp(LoWord(Myhandle^) +    $300,       { low address of 4th zero page }
-             20,                                { event queue size }
-             0,                                 { X min clamp }
-             MaxX,                              { X max clamp }
-             0,                                 { Y min clamp }
-             200,                               { Y max clamp }
-             Myuserid);                         { User ID for memory blocks }
 
    { Give a message while we load RAM based tools }
 
@@ -90,10 +26,8 @@ begin
    
    { Now load RAM based tools (and RAM patches to ROM tools!) }
 
-   new(ToolRec);
-
-   with ToolRec^ do
-   begin
+   	with startStop do
+   	begin
 		flags := 0;
 		videoMode := mode320;
 		numTools := 26;
@@ -150,53 +84,37 @@ begin
 		toolArray[25].minVersion := $0300;
 		toolArray[26].toolNumber := TextEditToolSet;
 		toolArray[26].minVersion := $0101;
-   end;
-   dummy := StartupTools(Myuserid, 0, ToolRec);                  { Load the tools I need }
+   	end;
+   	startStopResult :=
+   		myStartStopRecordPtr(
+   			StartupTools(Myuserid, 0, @startStop));                  { Load the tools I need }
+   	 
+   	toolLoadError := ToolError;
+   	
+   	if (toolLoadError <> 0) then
+	begin
+		MoveTo(0,80);
+		SetBackColor(0);
+		SetForeColor(1);
+		DrawString('Error occured during load of tools.');
+		
+		Long2Hex(toolLoadError, @hexStr, 8);
+		
+		MoveTo(0,100);
+		SetBackColor(1);
+		SetForeColor(2);
+		DrawText(@hexStr, 8);
+	end else
+	begin
+		MoveTo(0,80);
+		SetBackColor(0);
+		SetForeColor(1);
+		DrawText('Tools loaded ok.', 16);
+		InitCursor;
+		ShowCursor;
+	end;
     
-   if TLStatus
-   then
-        begin
-            MoveTo(0,80);
-            SetBackColor(0);
-            SetForeColor(1);
-            DrawString('Error occured during load of tools.');
-        end
-    else
-        begin
-            MoveTo(0,80);
-            SetBackColor(0);
-            SetForeColor(1);
-            DrawString('Tools loaded ok.');
-        end;
-
-    QDAuxStartUp;
-                  
-    WindStartUp(Myuserid);                      { init Window Manager }
-    RefreshDesktop(nil);
-                                                { init Control Manager }   
-    CtlStartUp(Myuserid,                        { User ID for memory blocks }
-              LoWord(Myhandle^) +   $400);      { low address of 5th zero page }
-        
-                                                { init Menu Manager }
-    MenuStartUp(Myuserid,                       { UserID for memory blocks }
-                LoWord(Myhandle^) + $500);      { low address of 6th zero page }
-
-    ScrapStartUp;                               { init Scrap Manager }
-   
-                                                { init Line Editor }
-    LEStartUp(LoWord(Myhandle^) +   $600,       { low address of 6th zero page }
-              Myuserid);                        { User ID for memory blocks }
-       
-   SFStartUp(Myuserid,                          { UserID for memory blocks }
-             LoWord(MyHandle^) +    $700);      { low address of 8th zero page }
-
-                                                { init Dialog Manager }
-    DialogStartUp(Myuserid);                    { User ID for memory blocks }
-
-    DeskStartUp;                                { init Desk Manager }
-   
-    InitCursor;
-    
+    Startup_Tools := toolLoadError;
 end; { of Startup_tools }
 
 procedure SetUpMenus;
@@ -206,29 +124,36 @@ procedure SetUpMenus;
      NewMenu maintains pointers to the string passed to it which must
      remain the same.  Thus only global variables are allowable.
 }
-var Height: Integer;
-begin
-   AppleMenuStr :=  concat('>>@\XN1\0',
-                           '==About SprEditor...\N300\0',
-                           '==-\N260D\0..');
-                           
-   FileMenuStr  :=  concat('>>  File  \N2\0',
-                           '==Clear Editor\N400\0',
-                           '==Open\N401*Oo\0',
-                           '==Save as ...\N402*Ss\0',
-                           '==-\N263D\0',
-                           '==Quit\N403*Qq\0.');
+   const
+      Return          = 13;
+   var
+      Height       : Integer;
+      MenuHand     : MenuHandle;
+      MenuString   : TextPtr;
+ 
+   begin
+       new(MenuString);
+       MenuString^ := concat('>> File \N2', chr(Return));
+       MenuString^ := concat(MenuString^, '==Clear Editor\N400\0', chr(Return));
+       MenuString^ := concat(MenuString^, '==Open\N401*Oo\0', chr(Return));
+       MenuString^ := concat(MenuString^, '==Save as ...\N402*Ss\0', chr(Return));
+       MenuString^ := concat(MenuString^, '==-\N263D\0', chr(Return));
+       MenuString^ := concat(MenuString^, '==Quit\N403*Qq\0', chr(Return));
+       MenuString^ := concat(MenuString^, '.', chr(Return));
+       MenuHand    := NewMenu(MenuString);
+       InsertMenu(MenuHand,0);
 
-   SetMTitleStart(5);
+       new(MenuString);
+       MenuString^ := concat('>>@\XN1\0', chr(Return));
+       MenuString^ := concat(MenuString^, '==About SprEditor...\N300\0',chr(Return));
+       MenuString^ := concat(MenuString^, '==-\N260D\0.',chr(Return));
+       MenuString^ := concat(MenuString^, '.',chr(Return));
+       MenuHand    := NewMenu(MenuString);
+       InsertMenu(MenuHand,0);
+       FixAppleMenu(0);
 
-   InsertMenu(NewMenu(@FileMenuStr[1]),0);      { File Menu }
-   InsertMenu(NewMenu(@AppleMenuStr[1]),0);     { Apple Menu }
-   
-   FixAppleMenu(1);         { Add DAs to apple menu }
-   
-   Height := FixMenuBar;    { Set sizes of menus }
-   
-   DrawMenuBar;             { ... and draw the menu bar! }
+       Height := FixMenuBar;
+       DrawMenuBar;
 end;
 
 { Shut down each of the //GS Tools initialized previously before exitting this
@@ -236,21 +161,7 @@ end;
 
 procedure Shutdown_tools;
 begin   
-    GrafOff;
-    DeskShutDown;
-    DialogShutDown;
-    SFShutdown;
-    LEShutDown;
-    ScrapShutDown;
-    MenuShutDown;
-    CtlShutDown;
-    WindShutDown;
-    QDAuxShutdown;
-    EMShutDown;
-    QDShutDown;
-    MTShutDown;
-    MMShutDown(Myuserid);
-    TLShutDown;
+    ShutDownTools(0, startStopResult);
 end; { of Shutdown_tools }
 
 procedure GetColorRect(i,j : Integer; var result: Rect);
@@ -309,7 +220,7 @@ begin
     PaintRect(r);
 end;
 
-function MousedWindow : Integer;
+function MousedWindow(event: EventRecord) : Integer;
 var
     i : integer;
 begin
@@ -413,7 +324,7 @@ begin
     end;
 
     with Windrecord[Current_window] do begin
-      paramLength := sizeof(paramList);
+      paramLength := 78; {sizeof(paramList);}
       wFrameBits       := $0020;
       wTitle       := nil;
       wRefCon      := 0;
@@ -441,7 +352,7 @@ begin
       wPosition.left   := Minx;
       wPosition.bottom := Maxy;
       wPosition.right  := Maxx;
-      wPlane       := nil;
+      wPlane       := pointer(-1);
       wStorage     := nil;
     end;
 
@@ -483,10 +394,10 @@ begin
 
     SetForeColor(10);
     SetBackColor(15);
-    MoveTo(78,10);  DrawString('SPrEditor');
+    MoveTo(78,10);  DrawString(@'SPrEditor');
   
     SetForeColor(13);
-    MoveTo(10,22);  DrawString('(C)  1988,  By Peter Easdown.');
+    MoveTo(10,22);  DrawString(@'(C)  1988,  By Peter Easdown.');
 
    itemHit := ModalDialog(nil);
 
@@ -522,7 +433,7 @@ begin
 
     SetForeColor(7);
     SetBackColor(15);
-    MoveTo(44,20);  DrawString('Quit, are you sure ?');
+    MoveTo(44,20);  DrawString(@'Quit, are you sure ?');
 
     itemHit := ModalDialog(nil);
 
@@ -617,17 +528,18 @@ begin
                    MesRight,
                    MesBottom,
                    @RefreshMessage);
-
+                   
+    selectwindow(Mywindow[Current_window]);
 end;
 
-procedure DoMouseDown;
+procedure DoMouseDown(event: EventRecord);
 var
     i,j : integer;
     r : rect;
     found : boolean;
     p : point;
 begin
-    Current_window := MousedWindow;
+    Current_window := MousedWindow(event);
     ShowWindow(Mywindow[Current_window]);
 
     If Current_window = Colour then
@@ -638,14 +550,18 @@ begin
             j := 0;
             repeat
                 GetColorRect(i,j, r);
-                If PtInRect(Event.eventwhere,r) then
+                If PtInRect(event.eventwhere,r) then
                 begin
                     Found := true;
+                end else begin
+                    j := j + 1;
                 end;
-                j := j + 1;
             until Found or (j = 2);
             
-            i := i + 1;
+            if not Found then
+            begin
+                i := i + 1;
+            end;
         until Found or (i = 8);
 
         If Found then
@@ -672,20 +588,23 @@ begin
     end;        
 end;
 
-procedure Monitor_tasks;
+{procedure Monitor_tasks;
 var
     i,j : Integer;
 begin
     while Event_number = Non_event do
     begin
         If MDown then DoMouseDown;
-        Event_number := TaskMaster($ffff,Event);
+        Event_number := TaskMaster($076e,Event);
         Check_cursors(Mywindow[Current_window]);
     end;
         
     case Event.eventwhat of
-    { Event manager Events }
-        ActivateEvt :   ;
+    { Event manager Events 
+        ActivateEvt     :
+        begin
+            SetPort(Mywindow[Current_window]);
+        end;
         MouseDownEvt    :   MDown := True;
         MouseUpEvt      :   MDown := False;
         keyDownEvt      :   ;
@@ -693,37 +612,77 @@ begin
     end;
     
     case Event_number of
-    { Task  Master Events }
+    { Task  Master Events 
+        wInSpecial,
         wInMenuBar  :   ProcessMenu(Event.TaskData);
     end;
     
     Event_number := Non_event;
-end;        
+end;        }
+
+   Procedure EventLoop;
+   var
+       Done        : Boolean;          { tells if the program should Stop  }
+       Event       : Integer;          { Event #; Returned by TaskMaster   }
+       LastEvent   : EventRecord;      { last Event Returned in Event loop }
+       Count       : Integer;
+
+   begin
+       Done := False;
+       LastEvent.taskMask := $1FFF;
+       Event := 0;
+       MDown := False;
+       
+       repeat
+           Check_cursors(Mywindow[Current_window]);
+   
+           If MDown then
+               DoMouseDown(LastEvent);
+           Event := TaskMaster($076e, LastEvent);
+
+           case LastEvent.eventWhat of
+               MouseDownEvt    :   MDown := True;
+               MouseUpEvt      :   MDown := False;
+               ActivateEvt     :   begin
+                                       {SetPort(WindowHandle[EditWindow]);}
+                                   end;
+               otherwise       :   ;
+           end;
+
+           case Event of
+               wInSpecial,
+               wInMenuBar  :   ProcessMenu(LastEvent.TaskData);
+               otherwise   :   ;
+           end; {case}
+           
+           if Time_to_quit then
+                Done := true;
+                
+       until Done;
+   end;
 
 begin
-    Startup_tools;
+   toolResult := Startup_tools;
     
-    SetUpMenus;
-
-    Event_number := Non_event;
-    Event.TaskMask := $1FFF;                { allow TaskMaster to do everything }
-    Time_to_quit := false;
-    Current_cursor := Arrow_cursor;
-    TotalWindow := 0;
-    CurrentColour := 0;
-    Freshit := 0;
-
-    InitWindows;
-    
-    ClearSprite;
-
-    Form_cursors;
-    
-    while not Time_to_quit do begin
-    
-        Monitor_tasks;
-        
+    if (toolResult = 0) then
+    begin
+		SetUpMenus;
+	
+		Current_cursor := Arrow_cursor;
+		TotalWindow := 0;
+		CurrentColour := 0;
+		Freshit := 0;
+	
+		InitWindows;
+		
+		ClearSprite;
+		
+		ShowCursor;
+	
+		Form_cursors;
+		
+		EventLoop;
+		
+		Shutdown_Tools;
     end;
-    
-    Shutdown_Tools;
 end.

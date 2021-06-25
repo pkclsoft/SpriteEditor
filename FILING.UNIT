@@ -1,0 +1,192 @@
+Unit Filing;
+
+INTERFACE
+
+uses Common, IntegerMath, DialogMgr, QuickDrawII, Cursors, SFToolSet, WindowMgr, Globals;
+
+var
+    myReply     : ReplyRecord; { misc globals}
+    TList : typeList;
+    
+procedure SaveSprite;
+procedure OpenSprite;
+
+IMPLEMENTATION
+
+procedure SaveSprite;
+var
+    SpriteFile      : File of byte;
+
+    i, j            : Integer;
+    SpriteWidth     : Integer;
+    SpriteHeight    : Integer;
+    valStr          : cString;
+    byteVal         : byte;
+begin
+    { work out how big the sprite is by looking for the widest and lowest non-zero pixel }
+    SpriteWidth := 0;
+    SpriteHeight := 0;
+
+    for j := 0 to 49 do
+    begin
+        for i := 0 to 49 do
+        begin
+            If Sprite[i,j] > 0 then
+            begin
+                if i > SpriteWidth then
+                begin
+                    SpriteWidth := i;
+                end;
+
+                if j > SpriteHeight then
+                begin
+                    SpriteHeight := j;
+                end;
+            end;
+        end;
+    end;
+    
+    SpriteWidth := SpriteWidth + 1;
+    SpriteHeight := SpriteHeight + 1;
+                
+    SetPort(Mywindow[Message]);
+    MoveTo(1,10);
+    SetBackColor(15);
+    SetForeColor(7);
+    DrawString(@'Width : ');
+    Long2Dec(SpriteWidth, @valStr, 3, true);
+    SetForeColor(10);
+    DrawString(@valStr);
+    SetForeColor(7);
+    DrawString(@'Height : ');
+    Long2Dec(SpriteHeight, @valStr, 3, true);
+    SetForeColor(10);
+    DrawString(@valStr);
+    
+    SFPutFile(25, 20, @'Save sprite as:', '', 15, myReply);
+    
+    If MyReply.Good then
+    begin
+        WaitCursor;
+
+        Rewrite(SpriteFile, myReply.fullpathname);
+    
+        for j := 0 to SpriteHeight - 1 do
+        begin
+            for i := 0 to SpriteWidth - 1 do
+            begin
+                If Sprite[i,j] > 9
+                then
+                    begin
+                        byteval := Sprite[i,j] + 55;
+                        write(SpriteFile, byteval);
+                    end
+                else begin
+                    byteval := Sprite[i,j] + 48;
+                    write(SpriteFile, byteval);
+                end;
+            end;
+            
+            byteval := 13;
+            write(SpriteFile, byteval);
+        end;
+    
+        close(SpriteFile);
+    end;
+
+end;
+
+procedure NewDItemPtr (theDialog: grafPortPtr; itemID: integer; var itemRect: rect;
+                    itemType: integer; itemDescr: univ longint;
+                    itemValue, itemFlag: integer; itemColorPtr: colorTblPtr);
+tool ($15, $0D);
+
+procedure OpenSprite;
+var
+    openDlog        : grafPortPtr;
+    r               : Rect;
+    itemHit         : Integer;
+    i, j            : Integer;
+    byteval         : byte;
+    intval          : integer;
+    SpriteFile      : File of byte;
+begin
+    with    r do begin
+        top := 50; left := 50; bottom := 100; right := 270;
+    end;
+    openDlog := NewModalDialog(r,true,0);
+
+    SetPort(openDlog);
+    with    r do begin
+        top := 30; left := 10; bottom := 0; right := 0;
+    end;
+
+    NewDItemPtr(openDlog,1,r,10,@'Ok',0,0,nil);
+
+    with    r do begin
+        top := 30; left := 135; bottom := 0; right := 0;
+    end;
+
+    NewDItemPtr(openDlog,2,r,10,@'Cancel',0,0,nil);
+    SetDefButton(2,openDlog);
+
+    SetForeColor(7);
+    SetBackColor(15);
+    MoveTo(44,20);  DrawString(@'Lose current Sprite ?');
+
+    itemHit := ModalDialog(nil);
+
+    CloseDialog(openDlog);
+
+    If itemHit = 1 then         {lets get another one then}
+    begin
+        TList.NumEntries := 1;
+        TList.FileType[1]  := $04;
+    
+        SFGetFile(25, 20, @'Load which sprite :',Nil,@TList, myReply);
+        
+        If Myreply.good then    {definitely want one}
+        begin
+            ClearSprite;
+            
+            Reset(SpriteFile, MyReply.FullPathname);
+            
+            j := 0;
+            repeat
+                i := 0;
+                repeat
+                    Read(SpriteFile, byteval);
+                    
+                    if byteval <> 13 then
+                    begin
+                        If byteval > 64
+                        then
+                            begin
+                                intval := byteval;
+                                Sprite[i,j] := intval - 55;
+                            end
+                        else begin
+                            intval := byteval;
+                            Sprite[i,j] := intval - 48;
+                        end;
+                            
+                        i := i + 1;
+                    end;
+                    
+                until (eof(SpriteFile)) or (i = 50) or (byteval = 13);
+                
+                { if there are extra characters, then skip them }
+                while (not eof(SpriteFile)) and (byteval <> 13) do
+                begin
+                    Read(SpriteFile, byteval);
+                end;
+
+                j := j + 1;
+            until (eof(SpriteFile)) or (j = 50);
+    
+            close(SpriteFile);
+        end;
+    end;
+end;
+
+end.

@@ -1,0 +1,126 @@
+Unit Cursors;
+
+INTERFACE
+
+uses  Common, QuickDrawII, IntegerMath, WindowMgr, EventMgr;
+
+const
+	Arrow_cursor = 0;
+	Beam_cursor = 1;
+	Watch_cursor = 2;
+
+Type
+	MyCursorType = record
+	      CursorHeight	:	Integer;
+	      CursorWidth	:	Integer;
+	      data			:	array[1..11,1..8] of Integer;
+	      mask			:	array[1..11,1..8] of Integer;
+	      HotSpotY		:	Integer;
+	      HotSpotX		:	Integer;
+	   end;
+    MyCursorTypePtr = ^MyCursorType;
+    
+var
+	Current_cursor	: Integer;
+
+	My_beam			: MyCursorType;
+	
+	Very_busy		: Boolean;
+
+procedure MySetCursor (theCursorPtr: MyCursorTypePtr); tool ($04, $8E);
+
+procedure Check_cursors(Current_window_ptr : grafPortPtr);
+procedure Do_arrow;
+procedure Do_watch;
+procedure Do_beam;
+procedure Form_cursors;
+
+IMPLEMENTATION
+
+procedure Do_beam;
+begin
+	If (Current_cursor = Arrow_cursor) or
+	   (Current_cursor = Watch_cursor) then
+	begin
+		MySetCursor(@My_beam);
+		Current_cursor := Beam_cursor;
+	end;
+end;
+
+procedure Do_watch;
+begin
+		WaitCursor;
+		Current_cursor := Watch_cursor;
+end;
+
+procedure Do_arrow;
+begin
+	If (Current_cursor = Beam_cursor)  or
+	   (Current_cursor = Watch_cursor) then
+	begin
+		InitCursor;
+		Current_cursor := Arrow_cursor;
+	end;
+end;
+
+procedure Check_cursors; {(Current_window_ptr : WindowPtr);}
+var
+	code:	 integer;
+	theWind : grafPortPtr;
+	myPoint : Point;
+begin
+	{ Make sure cursor is	being displayed	as the correct type }
+	GetMouse(myPoint);
+	LocalToGlobal(myPoint);
+	code := FindWindow(theWind,myPoint.h,myPoint.v);
+	
+	if Very_busy
+	then
+		begin
+			Do_watch;
+		end
+	else
+		begin
+			if code = wInContent
+			then
+				begin
+					Do_beam;
+				end
+			else
+				Do_arrow;
+		end;
+end;
+
+procedure Form_cursors;
+var
+	Addr : Longint;
+	i, j : integer;
+begin
+
+	with My_beam do			{ Form Beam cursor. }
+	begin
+		CursorHeight := 11;
+		CursorWidth		:= 8;
+		HotSpotX		:= 6;
+		HotSpotY		:= 6;
+		
+		for i := 1 to 11 do
+		begin
+		    for j := 1 to 8 do
+		    begin 
+		        data[i, j] := 0;
+		        mask[i, j] := 0;
+		    end;
+		end;
+	    data[4, 2] := 240;
+	    data[4, 4] := 15;
+	    data[5, 2] := 15;
+	    data[5, 4] := 240;
+	    data[8, 2] := 15;
+	    data[8, 4] := 240;
+	    data[9, 2] := 240;
+	    data[9, 4] := 15;
+	end;
+end;
+
+end.
