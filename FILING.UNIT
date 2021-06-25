@@ -63,7 +63,7 @@ begin
     SetForeColor(10);
     DrawString(@valStr);
     
-    SFPutFile(25, 20, @'Save sprite as:', '', 15, myReply);
+    SFPutFile(25, 20, @'Save sprite as:', @'sprite', 15, myReply);
     
     If MyReply.Good then
     begin
