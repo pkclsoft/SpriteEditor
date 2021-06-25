@@ -46,4 +46,4 @@ To build it, just execute the "build" script.
 ## Executing
 Just run the generated "spriteeditor" file.  The GS Invaders project has a whole bunch of sample sprites under the "sprites" folder.
 
-![Sprite Editor Screenshot](https://github.com/pkclsoft/spriteeditor/screenshot.png)
+![Sprite Editor Screenshot](https://github.com/pkclsoft/SpriteEditor/blob/25586ed4f2c61f86088d91a53379984bdd8fe1bf/screenshot.png)
