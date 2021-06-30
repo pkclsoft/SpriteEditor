@@ -4,16 +4,16 @@ set keeptype EXE
 set keepname $
 filetype =.unit src 5
 filetype =.pas src 5
-rm obj/=.a
-rm obj/=.root
-rm obj/spriteeditor
-rm obj/se
-asm CURSORS.UNIT
-asm GLOBALS.UNIT   
-asm FILING.UNIT     
-asm EDITOR.PAS
+delete obj/=.a
+delete obj/=.root
+delete obj/spriteeditor
+delete obj/se
+assemble CURSORS.UNIT
+assemble GLOBALS.UNIT   
+assemble FILING.UNIT     
+assemble EDITOR.PAS
 move -C =.root obj
 move -C =.a obj
-rm =.int
+delete =.int
 cd obj
 bind
